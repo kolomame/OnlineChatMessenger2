@@ -19,7 +19,7 @@ except socket.error as err:
     sys.exit(1)
 
 username = input("My name is: ")
-roomname = input("roomname: ")
+roomname = input("roomname: ") #roomname
 operation = input("operation: ")
 
 username_bits = username.encode('utf-8')
@@ -33,23 +33,37 @@ sock.send(header)
 sock.send(data)
 
 roomid_bits = sock.recv(1)
-roomid = int.from_bytes(roomid_bits, "big")
+roomid = int.from_bytes(roomid_bits, "big") #token
 print("roomid: {}".format(roomid))
+print('closing tcpsocket')
+sock.close()
 
 #udp
-sock_udp = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
 port = 9050
 
 def udpheader(roomnamesize, tokensize):
     return roomnamesize.to_bytes(1, "big") + tokensize.to_bytes(1, "big")
 
-def sendmessage(sock_udp, roomname_bits, roomid_bits):
+def sendmessage(sock, server_address, server_port, roomname_bits, roomid_bits):
     while True:
         message = input("")
         print("\033[1A\033[1A") 
         print("You: " + message)
         message_bits = message.encode('utf-8')
         header = udpheader(len(roomname_bits), len(roomid_bits))
+        data = roomname_bits + roomid_bits + message_bits
+
+        sock.sendto(header, (server_address, server_port))
+        sock.sendto(data, (server_address, server_port))
+
+def receivemessage(sock):
+    while True:
+        receive = sock.recvfrom(1024)[0].decode('utf-8')
+        print(receive)
+
+
         
 
 
