@@ -2,8 +2,9 @@ import socket
 import os
 from pathlib import Path
 import time
+import threading
 
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 server_address = '0.0.0.0'
 server_port = 9001
 
@@ -13,9 +14,9 @@ if not os.path.exists(dpath):
 
 print('Starting up on {} port {}'.format(server_address, server_port))
 
-sock.bind((server_address, server_port))
+sock_tcp.bind((server_address, server_port))
 
-sock.listen(1)
+sock_tcp.listen(1)
 
 
 
@@ -25,11 +26,10 @@ user_info = {} #user_info[address] = username
 room_info = {} #room_info[roomid] = roomname
 user_room_info = {} # user_room_info[roomid] = [address]
 user_time = {} #user_time[address] = time
-hostusers = []
 roomid = 0
 
 while True:
-    connection, address = sock.accept()
+    connection, address = sock_tcp.accept()
     try:
         print('connection from', address)
         header = connection.recv(31)
@@ -56,7 +56,6 @@ while True:
         if operation == 1:
             room_info[roomid] = roomname
             user_room_info[roomid] = [address]
-            hostusers.append(address)
             roomid += 1
             connection.sendall((roomid-1).to_bytes(1, "big"))
             break
@@ -105,22 +104,21 @@ def sendreceivemessage(sock, user_time, user_room_info):
             sock.sendto(senddata, user)
         
 
-def removeuser(sock, user_time, hostusers, user_info, user_room_info, room_info):
+def removeuser(sock, user_time, user_info, user_room_info, room_info):
     while True:
         current_time = time.time()
         for address, t in user_time.items():
             if current_time-t >= 10:
                 sendmessage = f'Communication has been lost'
                 #find roomid
-                for roomid, user in user_room_info.items():
+                for roomid, users in user_room_info.items():
                     #get roomid
-                    if address in user:
+                    if address in users:
                         #host or nothost
-                        if address in hostusers:
-                            hostusers.remove(address)
-                            for u in user:
-                                sock.sendto(sendmessage, u)
-                                del user_info[u]
+                        if address == users[0]:
+                            for user in users:
+                                sock.sendto(sendmessage, user)
+                                del user_info[user]
                             del room_info[roomid]
                             del user_room_info[roomid]
                             del user_time[address]
@@ -132,29 +130,23 @@ def removeuser(sock, user_time, hostusers, user_info, user_room_info, room_info)
                             user_room_info[roomid].remove(address)
 
 
-"""
-                if address in hostusers:#replace
-                    hostusers.remove(address)
-                    #find hostaddress roomid
-                    for roomid, user in user_room_info.items():#replace
-                        #get roomid
-                        if address in user:
-                            for u in user:
-                                sock.sendto(sendmessage, u)
-                                del user_info[u]
-                            del room_info[roomid]
-                            del user_room_info[roomid]
-                            del user_time[address]
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
 
+print('starting up on port {}'.format(server_port))
 
-                else:
-                    
-                    sock.sendto(sendmessage, address)
-                    del user_info[address]
-                    del user_time[address]
-                    #user_room_info[roomid].remove(address)
-"""
+sock.bind((server_address, server_port))
+user_info = {} #user_info[address] = username
+usertime = {} #usertime[address] = time.time()
+
+send_thread = threading.Thread(target=sendreceivemessage, args=(sock, user_time, user_room_info))
+remove_thread = threading.Thread(target=removeuser, args=(sock, user_time, user_info, user_room_info, room_info))
+
+send_thread.start()
+remove_thread.start()
+
+send_thread.join()
+remove_thread.join()
 
 
 
