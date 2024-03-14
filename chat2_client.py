@@ -34,9 +34,9 @@ data = roomname_bits + operation_bits + username_bits
 sock_tcp.send(header)
 sock_tcp.send(data)
 
-roomid_bits = sock_tcp.recv(1)
-roomid = int.from_bytes(roomid_bits, "big") #token
-print("roomid: {}".format(roomid))
+tcpaddress_bits = sock_tcp.recv(2048)
+tcpaddress = tcpaddress_bits.decode('utf-8') #token
+print("tcpaddress: {}".format(tcpaddress))
 print('closing tcpsocket')
 sock_tcp.close()
 
@@ -45,14 +45,16 @@ sock_tcp.close()
 def udpheader(roomnamesize, tokensize):
     return roomnamesize.to_bytes(1, "big") + tokensize.to_bytes(1, "big")
 
-def sendmessage(sock, server_address, server_port, roomname_bits, roomid_bits):
+def sendmessage(sock, server_address, server_port, roomname_bits, tcpaddress_bits):
     while True:
         message = input("")
         print("\033[1A\033[1A") 
         print("You: " + message)
         message_bits = message.encode('utf-8')
-        header = udpheader(len(roomname_bits), len(roomid_bits))
-        data = roomname_bits + roomid_bits + message_bits
+        header = udpheader(len(roomname_bits), len(tcpaddress_bits))
+        data = roomname_bits + tcpaddress_bits + message_bits
+        print(f'tcpaddressbits: {tcpaddress_bits}')
+        print(f'tcpaddresssize: {len(tcpaddress_bits)}')
 
         sock.sendto(header, (server_address, server_port))
         sock.sendto(data, (server_address, server_port))
@@ -70,7 +72,7 @@ address = ''
 sock.bind((address,port))
 
 
-send_thread = threading.Thread(target=sendmessage, args=(sock, server_address, server_port, roomname_bits, roomid_bits))
+send_thread = threading.Thread(target=sendmessage, args=(sock, server_address, server_port, roomname_bits, tcpaddress_bits))
 receive_thread = threading.Thread(target=receivemessage, args=(sock,))
 
 
