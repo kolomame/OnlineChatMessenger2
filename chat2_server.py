@@ -21,7 +21,10 @@ sock_tcp.listen(1)
 
 
 
-
+#user_room_info[roomid] = [str(roomid) + ',' + str(len(user_room_info[roomid]))] <--listnum = usernum
+#token = str(roomid) + ',' + str(usernum)
+token_address = {} #token_address[token] = address(tcpaddress)
+tcp_udp_address = {} #tcp_udp_address[tcpaddress] = udpaddress
 user_info = {} #user_info[address] = username
 room_info = {} #room_info[roomid] = roomname
 user_room_info = {} # user_room_info[roomid] = [address]
@@ -49,9 +52,11 @@ while True:
         operation = int(operation_bits.decode('utf-8'))
         username = username_bits.decode('utf-8')
 
-        print('roomname: {}, operation: {}, username: {}'.format(roomname, operation, username))
+        print('roomname: {}, operation: {}, username: {}, address: {}'.format(roomname, operation, username, address))
 
         user_info[address] = username
+        print(f'address: {address}')
+        print(f'username: {user_info[address]}')
         #cureate new chatroom
         if operation == 1:
             room_info[roomid] = roomname
@@ -79,7 +84,7 @@ while True:
         print("Closing current connection")
         connection.close()
 
-def sendreceivemessage(sock, user_time, user_room_info):
+def sendreceivemessage(sock, user_time, user_room_info, user_info):
     while True:
         print('\nwaiting to receive message')
         header, address = sock.recvfrom(2)
@@ -95,6 +100,8 @@ def sendreceivemessage(sock, user_time, user_room_info):
         roomname = roomname_bits.decode('utf-8')
         roomid = roomid_bits.decode('utf-8')
         message = message_bits.decode('utf-8')
+        print(f'address: {address}')
+        print(f'user_info: {user_info}')
         username = user_info[address]
         print(f'roomname: {roomname}, roomid: {roomid}, message: {message}, username: {username} ')
         senddata = f'{username}: {message}'.encode('utf-8')
@@ -139,7 +146,7 @@ sock.bind((server_address, server_port))
 user_info = {} #user_info[address] = username
 usertime = {} #usertime[address] = time.time()
 
-send_thread = threading.Thread(target=sendreceivemessage, args=(sock, user_time, user_room_info))
+send_thread = threading.Thread(target=sendreceivemessage, args=(sock, user_time, user_room_info, user_info))
 remove_thread = threading.Thread(target=removeuser, args=(sock, user_time, user_info, user_room_info, room_info))
 
 send_thread.start()

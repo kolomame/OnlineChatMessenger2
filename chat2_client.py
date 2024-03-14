@@ -10,6 +10,7 @@ sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 server_address = input("Type in the server's address to connect to: ")
 server_port = 9001
+port = 9050
 
 print('connecting to {}'.format(server_address, server_port))
 
@@ -63,15 +64,11 @@ def receivemessage(sock):
 
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 
-
-
-server_address = input("Type in the server's address to connect to: ")
 address = ''
-port = 9050
+
 
 sock.bind((address,port))
 
-name = input("My name is: ")
 
 send_thread = threading.Thread(target=sendmessage, args=(sock, server_address, server_port, roomname_bits, roomid_bits))
 receive_thread = threading.Thread(target=receivemessage, args=(sock,))
