@@ -53,8 +53,6 @@ def sendmessage(sock, server_address, server_port, roomname_bits, tcpaddress_bit
         message_bits = message.encode('utf-8')
         header = udpheader(len(roomname_bits), len(tcpaddress_bits))
         data = roomname_bits + tcpaddress_bits + message_bits
-        print(f'tcpaddressbits: {tcpaddress_bits}')
-        print(f'tcpaddresssize: {len(tcpaddress_bits)}')
 
         sock.sendto(header, (server_address, server_port))
         sock.sendto(data, (server_address, server_port))
