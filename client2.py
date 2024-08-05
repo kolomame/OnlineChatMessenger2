@@ -8,11 +8,10 @@ def protocol_header(roomnamesize, operation, operationpayloadsize):
 
 sock_tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
-# server_address = input("Type in the server's address to connect to: ")
 server_address = '0.0.0.0'
 server_port_tcp = 9001
 server_port_udp = 9002
-port = 9050
+port = 9051
 
 print('connecting to {}'.format(server_address, server_port_tcp))
 
@@ -33,8 +32,12 @@ operation_bits = operation.encode('utf-8')
 header = protocol_header(len(roomname_bits), len(operation_bits), len(username_bits))
 data = roomname_bits + operation_bits + username_bits
 
+print(1)
+
 sock_tcp.send(header)
 sock_tcp.send(data)
+
+print(2)
 
 tcpaddress_bits = sock_tcp.recv(2048)
 tcpaddress = tcpaddress_bits.decode('utf-8') #token
@@ -43,8 +46,6 @@ print('Start chat')
 sock_tcp.close()
 
 #udp
-
-
 
 def udpheader(roomnamesize, tokensize):
     return roomnamesize.to_bytes(1, "big") + tokensize.to_bytes(1, "big")
@@ -64,7 +65,6 @@ def sendmessage(sock, server_address, server_port, roomname_bits, tcpaddress_bit
             print("You: " + message)
         except(socket.error, BrokenPipeError) as e:
             break
-            
 
 def receivemessage(sock):
     while True:
@@ -94,7 +94,7 @@ receive_thread.start()
 send_thread.join()
 receive_thread.join()
 
-print('finish')
+
 
         
 
